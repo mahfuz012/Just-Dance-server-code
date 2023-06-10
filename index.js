@@ -1,7 +1,7 @@
 const express = require('express')
 const app = express()
 
-// var jwt = require('jsonwebtoken');
+var jwt = require('jsonwebtoken');
 const cors = require('cors');
 
 require('dotenv').config()
@@ -15,6 +15,26 @@ app.use(cors())
 app.use(express.json())
 
 
+
+
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization
+
+  if (!authorization) {
+      return res.status(401).send({ error: true, message: "authorxation access" })
+  }
+
+  const token = authorization.split(' ')[1];
+  jwt.verify(token, process.env.TOKEN_SECRET, (err, decoded) => {
+      if (err) {
+          return res.status(401).send({ error: true, message: "authorxation access" })
+      }
+         req.decoded = decoded
+
+      next();
+  })
+
+}
 
 
 
@@ -49,8 +69,28 @@ async function run() {
 
 
 
+
+
+    const verifyAdmin = async(req,res,next)=>{
+      const email= req.decoded.email 
+      const query = {email: email}
+      const user = await allUserCollection.findOne(query)
+      if( user?.role !== "admin" ){
+           return res.status(403).send({error:true})
+      }
+      
+      next()
+  }
+  
+
+
+
+
+
+
+
 // admin panel and need privacy
-  app.get("/usergetid", async(req,res)=>{
+  app.get("/usergetid",verifyJWT,verifyAdmin, async(req,res)=>{
        const result = await allUserCollection.find().toArray()
       res.send(result)
       })
@@ -58,7 +98,7 @@ async function run() {
 
 
 //is admin or not 
-app.get('/admin/find/:email', async (req, res) => {
+app.get('/admin/find/:email',verifyJWT,async (req, res) => {
 
   const getParams = req.params.email
   const findID = { email: getParams }
@@ -72,30 +112,24 @@ const isvalidAdmin = await allUserCollection.findOne(findID)
 })
 
 
-//is Instructor or not
-app.get('/instructor/find/:email', async (req, res) => {
 
-  const getParams = req.params.email
-  const findID = { email: getParams }
 
-const validAdmin = await allUserCollection.findOne(findID)
-   
-  const result = {admin:validAdmin?.role === "instructor"}
-  
-  res.send(result)
+
+
+
+
+
+
+
+
+
+
+
+app.post('/jwt', (req, res) => {
+  const user = req.body
+   const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '1h' })
+  res.send({ token })
 })
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
