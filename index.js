@@ -64,6 +64,7 @@ async function run() {
 
 
     const allUserCollection = client.db("just-dance").collection("user-collection")
+    const allClassesData = client.db("just-dance").collection("class-collection")
 
 
 
@@ -89,11 +90,28 @@ async function run() {
 
 
 
-// admin panel and need privacy
+// all user id and admin panel and need privacy
   app.get("/usergetid",verifyJWT,verifyAdmin, async(req,res)=>{
        const result = await allUserCollection.find().toArray()
       res.send(result)
       })
+
+// all intructor class add files here and it only show by admin
+
+  app.get("/allclasses",verifyJWT,verifyAdmin, async(req,res)=>{
+       const result = await allClassesData.find().toArray()
+      res.send(result)
+})
+
+  app.get("/myclassesdata", async(req,res)=>{
+        const getData = req.query.email 
+        const findInstructorClass = {email:getData}
+       const result = await allClassesData.find(findInstructorClass).toArray()
+      res.send(result)
+      })
+
+
+
 
 
 
@@ -144,14 +162,14 @@ app.post('/jwt', (req, res) => {
    res.send(result)
    })
 
+
+
+  //  add class add 
 app.post("/addclassdata", async(req,res)=>{
-  
-
-  
+  const getData= req.body
+  const result = await allClassesData.insertOne(getData)
+  res.send(result)
 })
-
-
-
 
 
 
@@ -166,7 +184,7 @@ app.post("/addclassdata", async(req,res)=>{
       }
   }
 
-const result = allUserCollection.updateOne(findData,makeAdminUser)
+const result = await allUserCollection.updateOne(findData,makeAdminUser)
 res.send(result)
 })
 
@@ -183,7 +201,28 @@ res.send(result)
       }
   }
 
-const result = allUserCollection.updateOne(findData,makeAdminUser)
+const result = await allUserCollection.updateOne(findData,makeAdminUser)
+res.send(result)
+})
+
+
+
+
+
+
+ app.patch('/approvedupdate/:id',async(req,res)=>{
+    const getId = req.params.id
+    const getbody= req.body
+    const findData = {_id: new ObjectId(getId)}
+
+    const makeAdminUser = {
+
+      $set: {
+          status: getbody.declare
+      }
+  }
+
+const result = await allClassesData.updateOne(findData,makeAdminUser)
 res.send(result)
 })
 
