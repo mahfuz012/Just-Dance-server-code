@@ -132,12 +132,6 @@ app.post('/jwt', (req, res) => {
 })
 
 
-
-
-
-
-
-
    app.post("/alluserid", async(req,res)=>{
    const getData = req.body
     const duplicateEmail = {email: getData.email}
@@ -149,6 +143,15 @@ app.post('/jwt', (req, res) => {
      const result = await allUserCollection.insertOne(getData)
    res.send(result)
    })
+
+app.post("/addclassdata", async(req,res)=>{
+  
+
+  
+})
+
+
+
 
 
 
