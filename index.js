@@ -227,6 +227,23 @@ res.send(result)
 })
 
 
+ app.patch('/adminfeedback/:id',async(req,res)=>{
+    const getId = req.params.id
+    const getbody= req.body
+    const findData = {_id: new ObjectId(getId)}
+
+    const makeAdminUser = {
+
+      $set: {
+          feedback: getbody
+      }
+  }
+
+const result = await allClassesData.updateOne(findData,makeAdminUser)
+res.send(result)
+})
+
+
 
 
 
