@@ -65,6 +65,7 @@ async function run() {
 
     const allUserCollection = client.db("just-dance").collection("user-collection")
     const allClassesData = client.db("just-dance").collection("class-collection")
+    const seletedClasses = client.db("just-dance").collection("seleted-collection")
 
 
 
@@ -98,7 +99,7 @@ async function run() {
 
 // all intructor class add files here and it only show by admin
 
-  app.get("/allclasses",verifyJWT,verifyAdmin, async(req,res)=>{
+  app.get("/allclasses",verifyJWT, async(req,res)=>{
        const result = await allClassesData.find().toArray()
       res.send(result)
 })
@@ -109,9 +110,6 @@ async function run() {
        const result = await allClassesData.find(findInstructorClass).toArray()
       res.send(result)
       })
-
-
-
 
 
 
@@ -130,6 +128,19 @@ const isvalidAdmin = await allUserCollection.findOne(findID)
 })
 
 
+// students seleted  classes 
+
+
+app.get('/myselectclass', verifyJWT, async (req, res) => {
+
+const getData = req.query.email 
+const findID = { user_email:getData}
+const isvalidAdmin = await seletedClasses.find(findID).toArray()
+   
+  res.send(isvalidAdmin)
+})
+
+
 
 
 
@@ -145,7 +156,7 @@ const isvalidAdmin = await allUserCollection.findOne(findID)
 
 app.post('/jwt', (req, res) => {
   const user = req.body
-   const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '1h' })
+   const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '30d' })
   res.send({ token })
 })
 
@@ -164,11 +175,35 @@ app.post('/jwt', (req, res) => {
 
 
 
+  //  student select class
+   app.post("/student/selectclass/:email/:id", async(req,res)=>{
+    const {email,id} = req.params
+ 
+    const findData = {_id: new ObjectId(id)}
+
+    const serachdata = await allClassesData.findOne(findData)
+    serachdata.user_email = email
+     serachdata._id = null
+
+
+
+     const result = await seletedClasses.insertOne(serachdata)
+
+   res.send(result)
+   })
+
+
+
   //  add class add 
 app.post("/addclassdata", async(req,res)=>{
   const getData= req.body
   const result = await allClassesData.insertOne(getData)
   res.send(result)
+})
+
+
+app.delete("/deletemyseleted/:id",async(req,res)=>{
+  
 })
 
 
