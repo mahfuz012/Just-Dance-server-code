@@ -5,7 +5,7 @@ var jwt = require('jsonwebtoken');
 const cors = require('cors');
 
 require('dotenv').config()
-// const stripe = require("stripe")(process.env.PAYMENT_SECRET)
+const stripe = require("stripe")(process.env.PAYMENT_SECRET)
 
 
 const port = process.env.PORT || 5000
@@ -66,6 +66,7 @@ async function run() {
     const allUserCollection = client.db("just-dance").collection("user-collection")
     const allClassesData = client.db("just-dance").collection("class-collection")
     const seletedClasses = client.db("just-dance").collection("seleted-collection")
+    const paymentHistory = client.db("just-dance").collection("payment-history")
 
 
 
@@ -203,7 +204,10 @@ app.post("/addclassdata", async(req,res)=>{
 
 
 app.delete("/deletemyseleted/:id",async(req,res)=>{
-  
+  const getid = req.params.id
+  const findData = {_id : new ObjectId(getid)}
+  const result = await seletedClasses.deleteOne(findData)
+  res.send(result)
 })
 
 
@@ -288,7 +292,38 @@ res.send(result)
 
 
 
+app.post("/create-payment-intent",verifyJWT, async (req, res) => {
+  const { price } = req.body;
 
+ const amount = price*100
+
+if(amount <=1){
+return res.status(400).send({ error: "Invalid price value" });
+}
+
+const paymentIntent = await stripe.paymentIntents.create({
+    amount: amount,
+    currency: "usd",
+    payment_method_types: ["card"],
+  });
+
+  
+res.send({
+    clientSecret: paymentIntent.client_secret,
+  });
+});
+
+
+
+
+
+app.post('/paymenthistory',async(req,res)=>{
+  const payment = req.body
+  const result =  await paymentHistory.insertOne(payment)
+  const query = {_id: new ObjectId(payment.productID)}
+  const deleteresult = await seletedClasses.deleteOne(query)
+  res.send({result,deleteresult})
+})
 
 
 
