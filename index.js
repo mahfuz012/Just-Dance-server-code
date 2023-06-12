@@ -93,7 +93,7 @@ async function run() {
 
 
 // all user id and admin panel and need privacy
-  app.get("/usergetid",verifyJWT,verifyAdmin, async(req,res)=>{
+  app.get("/usergetid",verifyJWT,async(req,res)=>{
        const result = await allUserCollection.find().toArray()
       res.send(result)
       })
@@ -143,6 +143,26 @@ const isvalidAdmin = await seletedClasses.find(findID).toArray()
 
 
 
+app.get("/userpaymentHistory", verifyJWT,async(req,res)=>{
+  const getData = req.query.email 
+  const findID = { email :getData}
+  
+  const result = await paymentHistory.find(findID).toArray()
+  res.send(result)
+
+})
+
+app.get("/enrolleddata", verifyJWT, async (req, res) => {
+  const getData = req.query.email;
+  const findID = { email: getData };
+  const result = await paymentHistory.find(findID).toArray();
+  const query = { _id: { $in: result.map((p) => new ObjectId(p.productID)) } };
+  const searchfindData = await allClassesData.find(query).toArray();
+
+  res.send(searchfindData);
+});
+
+
 
 
 
@@ -176,22 +196,24 @@ app.post('/jwt', (req, res) => {
 
 
 
-  //  student select class
-   app.post("/student/selectclass/:email/:id", async(req,res)=>{
-    const {email,id} = req.params
+
+   app.post("/student/selectclass/", async(req,res)=>{
+    const getData = req.body
  
-    const findData = {_id: new ObjectId(id)}
-
-    const serachdata = await allClassesData.findOne(findData)
-    serachdata.user_email = email
-     serachdata._id = null
-
-
-
-     const result = await seletedClasses.insertOne(serachdata)
+const result = await seletedClasses.insertOne(getData)
 
    res.send(result)
    })
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -226,6 +248,32 @@ app.delete("/deletemyseleted/:id",async(req,res)=>{
 const result = await allUserCollection.updateOne(findData,makeAdminUser)
 res.send(result)
 })
+
+
+app.put("/updateclassdata/:id",async(req,res)=>{
+  const getId = req.params.id
+  const {className,instructorName, email, availableSeats, price}  = req.body
+  const findData = {_id: new ObjectId(getId)}
+
+  const updateinstructor = {
+
+    $set: {
+      className:className,
+      instructorName:instructorName,
+      email:email,
+      availableSeats:availableSeats,
+      price:price
+
+
+    }
+}
+
+const result = await allClassesData.updateOne(findData,updateinstructor)
+res.send(result)
+})
+
+
+
 
 
 
@@ -320,12 +368,42 @@ res.send({
 app.post('/paymenthistory',async(req,res)=>{
   const payment = req.body
   const result =  await paymentHistory.insertOne(payment)
-  const query = {_id: new ObjectId(payment.productID)}
+  const query = {classID: payment.productID}
   const deleteresult = await seletedClasses.deleteOne(query)
   res.send({result,deleteresult})
 })
 
 
+
+
+app.put('/reducequantity/:id',async(req,res)=>{
+const getData = req.params.id
+const findData = {_id: new ObjectId(getData)}
+const getfindData = await allClassesData.findOne(findData)
+
+const reduceData = (getfindData?.availableSeats) - 1
+
+
+let  inreaseData = 1
+
+if(getfindData?.enroll){
+ inreaseData = getfindData?.enroll + inreaseData
+}
+
+
+const setDataReduce = {
+
+  $set: {
+    availableSeats: parseFloat(reduceData),
+    enroll:inreaseData
+  }
+}
+
+
+
+const result = await allClassesData.updateOne(findData,setDataReduce)
+res.send(result)
+})
 
 
 
