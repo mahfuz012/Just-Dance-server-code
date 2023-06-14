@@ -100,12 +100,12 @@ async function run() {
 
 // all intructor class add files here and it only show by admin
 
-  app.get("/allclasses",verifyJWT, async(req,res)=>{
+  app.get("/allclasses", async(req,res)=>{
        const result = await allClassesData.find().toArray()
       res.send(result)
 })
 
-  app.get("/myclassesdata", async(req,res)=>{
+  app.get("/myclassesdata",verifyJWT, async(req,res)=>{
         const getData = req.query.email 
         const findInstructorClass = {email:getData}
        const result = await allClassesData.find(findInstructorClass).toArray()
@@ -167,7 +167,17 @@ app.get("/enrolleddata", verifyJWT, async (req, res) => {
 
 
 
-
+app.get("/popularclasses", async (req, res) => {
+  const result = await allClassesData.aggregate([
+{
+  $sort : {enroll : -1}
+},
+{
+$limit : 6 
+}
+]).toArray()
+res.send(result)
+});
 
 
 
@@ -410,9 +420,7 @@ res.send(result)
 
 
 
-
-
-    await client.db("admin").command({ ping: 1 });
+await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     
