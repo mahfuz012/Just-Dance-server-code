@@ -386,6 +386,7 @@ const paymentIntent = await stripe.paymentIntents.create({
   });
 
   
+
 res.send({
     clientSecret: paymentIntent.client_secret,
   });
