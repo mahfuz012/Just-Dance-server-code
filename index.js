@@ -59,7 +59,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
    
-    await client.connect();
+    // await client.connect();
    
 
 
@@ -85,6 +85,17 @@ async function run() {
       next()
   }
   
+    const verifyInstructor = async(req,res,next)=>{
+      const email= req.decoded.email 
+      const query = {email: email}
+      const user = await allUserCollection.findOne(query)
+      if( user?.role !== "instructor" ){
+           return res.status(403).send({error:true})
+      }
+      
+      next()
+  }
+  
 
 
 
@@ -93,7 +104,7 @@ async function run() {
 
 
 // all user id and admin panel and need privacy
-  app.get("/usergetid",verifyJWT,async(req,res)=>{
+  app.get("/usergetid",async(req,res)=>{
        const result = await allUserCollection.find().toArray()
       res.send(result)
       })
@@ -119,14 +130,23 @@ app.get('/admin/find/:email',verifyJWT,async (req, res) => {
 
   const getParams = req.params.email
   const findID = { email: getParams }
-
 const isvalidAdmin = await allUserCollection.findOne(findID)
-   
-
-  const result = {admin:isvalidAdmin?.role}
-  
-  res.send(result)
+const result = {admin:isvalidAdmin?.role }
+ res.send(result)
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // students seleted  classes 
@@ -375,7 +395,7 @@ res.send({
 
 
 
-app.post('/paymenthistory',async(req,res)=>{
+app.post('/paymenthistory',verifyJWT, async(req,res)=>{
   const payment = req.body
   const result =  await paymentHistory.insertOne(payment)
   const query = {classID: payment.productID}
@@ -420,8 +440,7 @@ res.send(result)
 
 
 
-await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
   } finally {
     
    
